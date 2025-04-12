@@ -6,17 +6,23 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
 public class PlayerThread extends Thread {
     private String playerName;
     private GameState gameState;
-    public Handler handler;         // Receives messages (YOUR_TURN, SHOT_RESPONSE, GAME_OVER)
-    private Handler uiHandler;       // Reference to MainActivity's handler for sending shots
+    public Handler handler;           // Receives YOUR_TURN, SHOT_RESPONSE, GAME_OVER.
+    private Handler uiHandler;         // Reference to MainActivity's handler.
     private Set<Integer> attemptedShots;
     private Random random;
+
+    // Strategy variables for Player A.
+    private Integer lastShotIndex = null;
+    private String lastOutcome = null;
 
     public PlayerThread(String name, GameState state, Handler uiHandler) {
         this.playerName = name;
@@ -28,10 +34,8 @@ public class PlayerThread extends Thread {
 
     @Override
     public void run() {
-        // Prepare the looper for this thread so it can process messages.
         Looper.prepare();
 
-        // Initialize the thread's handler.
         handler = new Handler(Looper.myLooper(), msg -> {
             switch (msg.what) {
                 case MessageConstants.MSG_YOUR_TURN:
@@ -40,8 +44,8 @@ public class PlayerThread extends Thread {
                     break;
                 case MessageConstants.MSG_SHOT_RESPONSE:
                     String outcome = (String) msg.obj;
+                    lastOutcome = outcome;  // Store outcome to influence strategy.
                     Log.d("PlayerThread", playerName + " received outcome: " + outcome);
-                    // Outcome processing can be expanded for strategy adjustments.
                     break;
                 case MessageConstants.MSG_GAME_OVER:
                     Log.d("PlayerThread", playerName + " received GAME_OVER. Terminating thread.");
@@ -57,24 +61,43 @@ public class PlayerThread extends Thread {
         Looper.loop();
     }
 
-    // Simulate taking a shot. Wait 2 seconds, choose a hole that hasn't been tried before, then send the shot.
-    public void takeShot() {
-        try {
-            Thread.sleep(5000); // Delay so a human viewer can see the previous move.
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    // Determines which hole to shoot at based on strategy.
+    private int chooseShotIndex() {
+        // For Player A, if the last outcome was a near miss, try to choose a hole in the same group.
+        if ("Player A".equals(playerName) && lastOutcome != null && lastOutcome.equals("NEAR_MISS") && lastShotIndex != null) {
+            int group = lastShotIndex / 5;
+            List<Integer> groupIndices = new ArrayList<>();
+            for (int i = group * 5; i < group * 5 + 5; i++) {
+                if (!attemptedShots.contains(i)) {
+                    groupIndices.add(i);
+                }
+            }
+            if (!groupIndices.isEmpty()) {
+                return groupIndices.get(random.nextInt(groupIndices.size()));
+            }
         }
-
-        // Choose a random hole index that hasn't been attempted by this player.
+        // Otherwise, choose a random hole not yet attempted.
         int shotIndex;
         do {
             shotIndex = random.nextInt(50);
         } while (attemptedShots.contains(shotIndex));
-        attemptedShots.add(shotIndex);
+        return shotIndex;
+    }
 
+    // Take a shot after waiting for a delay.
+    public void takeShot() {
+        try {
+            // Use a longer delay (e.g., 5 secs) so the UI update is noticeable.
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        int shotIndex = chooseShotIndex();
+        attemptedShots.add(shotIndex);
+        lastShotIndex = shotIndex; // Save the current shot index for strategy adjustments.
         Log.d("PlayerThread", playerName + " is taking shot at hole " + shotIndex);
 
-        // Create and send the shot message to the UI thread.
         Message shotMsg = Message.obtain();
         shotMsg.what = MessageConstants.MSG_SHOT;
         shotMsg.arg1 = shotIndex;
