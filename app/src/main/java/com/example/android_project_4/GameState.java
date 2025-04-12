@@ -8,7 +8,6 @@ public class GameState {
     public List<Hole> holes = new ArrayList<>();
     public int winningHoleIndex;
 
-    // Initializes 50 holes and randomly marks one as the winning hole.
     public void initializeHoles() {
         for (int i = 0; i < 50; i++) {
             holes.add(new Hole(i));
@@ -18,11 +17,11 @@ public class GameState {
         holes.get(winningHoleIndex).setWinning(true);
     }
 
-    // Represents a single hole.
+    // Inner class representing a single hole.
     public static class Hole {
         private int id;
         private boolean isWinning;
-        private String occupiedBy;  // Future use: "Player A" or "Player B"
+        private String occupiedBy;  // Will be "Player A", "Player B", or empty.
 
         public Hole(int id) {
             this.id = id;
@@ -30,24 +29,10 @@ public class GameState {
             this.occupiedBy = "";
         }
 
-        public int getId() {
-            return id;
-        }
-
-        public boolean isWinning() {
-            return isWinning;
-        }
-
-        public void setWinning(boolean winning) {
-            isWinning = winning;
-        }
-
-        public String getOccupiedBy() {
-            return occupiedBy;
-        }
-
-        public void setOccupiedBy(String occupiedBy) {
-            this.occupiedBy = occupiedBy;
-        }
+        public int getId() { return id; }
+        public boolean isWinning() { return isWinning; }
+        public void setWinning(boolean winning) { isWinning = winning; }
+        public String getOccupiedBy() { return occupiedBy; }
+        public void setOccupiedBy(String occupiedBy) { this.occupiedBy = occupiedBy; }
     }
 }
