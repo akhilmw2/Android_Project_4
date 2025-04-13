@@ -17,22 +17,45 @@ public class GameState {
         holes.get(winningHoleIndex).setWinning(true);
     }
 
-    // Inner class representing a single hole.
     public static class Hole {
         private int id;
         private boolean isWinning;
-        private String occupiedBy;  // Will be "Player A", "Player B", or empty.
+        private String occupiedBy;  // e.g., "Player A", "Player B"
+        private String outcome;     // e.g., "BIG_MISS", "NEAR_MISS", etc.
 
         public Hole(int id) {
             this.id = id;
             this.isWinning = false;
             this.occupiedBy = "";
+            this.outcome = "";
         }
 
-        public int getId() { return id; }
-        public boolean isWinning() { return isWinning; }
-        public void setWinning(boolean winning) { isWinning = winning; }
-        public String getOccupiedBy() { return occupiedBy; }
-        public void setOccupiedBy(String occupiedBy) { this.occupiedBy = occupiedBy; }
+        public int getId() {
+            return id;
+        }
+
+        public boolean isWinning() {
+            return isWinning;
+        }
+
+        public void setWinning(boolean winning) {
+            isWinning = winning;
+        }
+
+        public String getOccupiedBy() {
+            return occupiedBy;
+        }
+
+        public void setOccupiedBy(String occupiedBy) {
+            this.occupiedBy = occupiedBy;
+        }
+
+        public String getOutcome() {
+            return outcome;
+        }
+
+        public void setOutcome(String outcome) {
+            this.outcome = outcome;
+        }
     }
 }

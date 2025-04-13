@@ -88,7 +88,7 @@ public class PlayerThread extends Thread {
     public void takeShot() {
         try {
             // Use a longer delay (e.g., 5 secs) so the UI update is noticeable.
-            Thread.sleep(5000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

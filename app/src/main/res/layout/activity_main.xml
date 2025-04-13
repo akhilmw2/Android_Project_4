@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/scrollView"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
-    <LinearLayout
-        android:id="@+id/holesLayout"
-        android:orientation="vertical"
+    <!-- Scrollable container for the holes (each added as a horizontal container) -->
+    <ScrollView
+        android:id="@+id/scrollViewHoles"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:id="@+id/holesLayout"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <!-- Dynamically added containers for each hole. -->
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- TextView for game summary -->
+    <TextView
+        android:id="@+id/summaryTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
-
-        <!-- Initial placeholder to show the game board -->
-        <TextView
-            android:id="@+id/holePlaceholder"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hole display will be updated here."
-            android:textSize="18sp" />
-    </LinearLayout>
-</ScrollView>
+        android:textColor="#000000"
+        android:textSize="18sp"
+        android:paddingTop="16dp"/>
+</LinearLayout>
