@@ -7,38 +7,38 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
     private GameState gameState;
     private LinearLayout holesLayout;
-    private TextView summaryTextView; // For game-over summary
+    private TextView summaryTextView;
+    private Button startGameButton;
 
     // References to the two player threads.
     private PlayerThread playerA;
     private PlayerThread playerB;
 
+    // Initially, we'll start with Player A.
     private String currentPlayerName = "Player A";
     private boolean gameOver = false;
 
-    // Handler that receives shot messages from player threads.
+    // Handler to receive shot messages from the player threads.
     private Handler gameHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MessageConstants.MSG_SHOT:
-                    // msg.obj holds the player's name; arg1 holds the shot index.
-                    String playerName = (String) msg.obj;
-                    int shotIndex = msg.arg1;
-                    Log.d("MainActivity", playerName + " shot at hole " + shotIndex);
-                    processShot(playerName, shotIndex);
-                    break;
-                default:
-                    super.handleMessage(msg);
+            if (msg.what == MessageConstants.MSG_SHOT) {
+                String playerName = (String) msg.obj;
+                int shotIndex = msg.arg1;
+                Log.d("MainActivity", playerName + " shot at hole " + shotIndex);
+                processShot(playerName, shotIndex);
+            } else {
+                super.handleMessage(msg);
             }
         }
     };
@@ -48,41 +48,55 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize UI elements
         holesLayout = findViewById(R.id.holesLayout);
         summaryTextView = findViewById(R.id.summaryTextView);
+        startGameButton = findViewById(R.id.startGameButton);
 
         // Initialize game state (50 holes, one winning hole).
         gameState = new GameState();
         gameState.initializeHoles();
-
         updateUI();
 
-        // Start both player threads.
-        playerA = new PlayerThread("Player A", gameState, gameHandler);
-        playerB = new PlayerThread("Player B", gameState, gameHandler);
-        playerA.start();
-        playerB.start();
+        // Set up start button to trigger game start.
+        startGameButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Disable the button so it can't be pressed again.
+                startGameButton.setEnabled(false);
+                // Create and start the player threads.
+                playerA = new PlayerThread("Player A", gameState, gameHandler);
+                playerB = new PlayerThread("Player B", gameState, gameHandler);
+                playerA.start();
+                playerB.start();
 
-        // Signal the first turn.
-        sendYourTurn(currentPlayerName);
+                // Delay the sending of the first turn to give player threads time to initialize.
+                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendYourTurn(currentPlayerName);
+                    }
+                }, 1000);  // 1000ms delay; adjust if needed.
+            }
+        });
+
     }
 
+    // Update the UI: each hole is presented as a horizontal container with a circle (ImageView)
+    // and a text label showing the shot info.
     private void updateUI() {
         holesLayout.removeAllViews();
         int totalHoles = gameState.holes.size();
         for (int i = 0; i < totalHoles; i++) {
             GameState.Hole hole = gameState.holes.get(i);
-            // Create a horizontal LinearLayout for each hole.
             LinearLayout container = new LinearLayout(this);
             container.setOrientation(LinearLayout.HORIZONTAL);
 
-            // Create an ImageView for the hole circle.
             ImageView holeView = new ImageView(this);
             LinearLayout.LayoutParams circleParams = new LinearLayout.LayoutParams(150, 150);
             circleParams.setMargins(8, 8, 8, 8);
             holeView.setLayoutParams(circleParams);
 
-            // Set background based on hole state.
             if (hole.isWinning()) {
                 holeView.setBackgroundResource(R.drawable.winning_hole);
             } else if (!hole.getOccupiedBy().isEmpty()) {
@@ -96,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
             }
             container.addView(holeView);
 
-            // Create a TextView for shot information.
             TextView infoText = new TextView(this);
             infoText.setTextSize(16f);
             String info;
@@ -114,11 +127,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Process a player's shot.
+    // Process a shot from a player.
     private void processShot(String playerName, int shotIndex) {
         if (gameOver) return;
 
-        // Determine shot outcome
         GameState.Hole shotHole = gameState.holes.get(shotIndex);
         String outcome;
         boolean shotValid = shotHole.getOccupiedBy().isEmpty();
@@ -147,16 +159,15 @@ public class MainActivity extends AppCompatActivity {
         }
         Log.d("MainActivity", playerName + " outcome: " + outcome);
 
-        // Force the UI update on the main thread.
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 updateUI();
                 holesLayout.requestLayout();
+                Log.d("MainActivity", "UI updated for shot outcome.");
             }
         });
 
-        // Send the outcome back to the shooting player's thread.
         Message response = Message.obtain();
         response.what = MessageConstants.MSG_SHOT_RESPONSE;
         response.obj = outcome;
@@ -191,17 +202,15 @@ public class MainActivity extends AppCompatActivity {
             summaryTextView.setText(finalMessage);
             showGameResult(finalMessage);
         } else {
-
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    sendYourTurn(playerName.equals("Player A") ? "Player B" : "Player A");
+                    String nextPlayer = playerName.equals("Player A") ? "Player B" : "Player A";
+                    sendYourTurn(nextPlayer);
                 }
-            }, 2000);
+            }, 3000);
         }
     }
-
-
 
     // Sends a YOUR_TURN message to the designated player.
     private void sendYourTurn(String playerName) {
@@ -218,11 +227,12 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("MainActivity", "Turn: Player B");
             }
         }
+        // Update current player tracking.
+        currentPlayerName = playerName;
     }
 
     // Displays an AlertDialog with the game result.
     private void showGameResult(String resultMessage) {
-        // Create an AlertDialog on the main thread.
         new AlertDialog.Builder(this)
                 .setTitle("Game Result")
                 .setMessage(resultMessage)
