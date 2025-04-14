@@ -87,7 +87,7 @@ public class PlayerThread extends Thread {
     // Take a shot after waiting for a delay.
     public void takeShot() {
         try {
-            // Use a longer delay (e.g., 5 secs) so the UI update is noticeable.
+
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -95,7 +95,7 @@ public class PlayerThread extends Thread {
 
         int shotIndex = chooseShotIndex();
         attemptedShots.add(shotIndex);
-        lastShotIndex = shotIndex; // Save the current shot index for strategy adjustments.
+        lastShotIndex = shotIndex;
         Log.d("PlayerThread", playerName + " is taking shot at hole " + shotIndex);
 
         Message shotMsg = Message.obtain();

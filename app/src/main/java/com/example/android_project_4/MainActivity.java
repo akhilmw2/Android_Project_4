@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Use a layout with a vertical LinearLayout containing the holes list and a summary TextView.
         setContentView(R.layout.activity_main);
 
         holesLayout = findViewById(R.id.holesLayout);
@@ -56,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
         gameState = new GameState();
         gameState.initializeHoles();
 
-        // Show initial holes UI.
         updateUI();
 
         // Start both player threads.
@@ -69,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
         sendYourTurn(currentPlayerName);
     }
 
-    // Updated updateUI(): display a horizontal container for each hole that has a circle (ImageView) and info (TextView).
     private void updateUI() {
         holesLayout.removeAllViews();
         int totalHoles = gameState.holes.size();
@@ -108,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
             } else if (hole.isWinning()) {
                 info = " Winning Hole";
             } else {
-                info = " Empty";
+                info = " Empty Hole";
             }
             infoText.setText(info);
             container.addView(infoText);
@@ -171,7 +168,6 @@ public class MainActivity extends AppCompatActivity {
                 playerB.handler.sendMessage(response);
         }
 
-        // Game-over handling: show final summary and popup if needed.
         if (gameOver) {
             Message gameOverMsgA = Message.obtain();
             gameOverMsgA.what = MessageConstants.MSG_GAME_OVER;
@@ -195,13 +191,13 @@ public class MainActivity extends AppCompatActivity {
             summaryTextView.setText(finalMessage);
             showGameResult(finalMessage);
         } else {
-            // Instead of calling sendYourTurn() immediately, use postDelayed on the main thread.
+
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     sendYourTurn(playerName.equals("Player A") ? "Player B" : "Player A");
                 }
-            }, 2000); // 2-second delay before next turn (adjust if needed)
+            }, 2000);
         }
     }
 
@@ -234,7 +230,6 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-                        // Optionally, you could finish() the activity or restart the game.
                     }
                 })
                 .show();
